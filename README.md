@@ -1,1 +1,1 @@
-# Esp32-mqqt
+To create a weather reporting system using an ESP32, MQTT, and Adafruit IO, set up an Adafruit IO account and create feeds for temperature and humidity. Connect a DHT22 sensor to the ESP32 (VCC to 3.3V, GND to GND, Data to GPIO4). In the Arduino IDE, install the Adafruit MQTT, Adafruit IO Arduino, and DHT sensor libraries. Write a program to read data from the DHT22 sensor and publish it to Adafruit IO via MQTT using your Adafruit IO username and AIO key. This will enable remote monitoring of temperature and humidity data through the Adafruit IO dashboard.
