@@ -1,0 +1,69 @@
+#include <WiFi.h>
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_Client.h"
+#include "DHT.h"
+
+#define WIFI_SSID "your_wifi_ssid"   // replace with your wifi ssid
+#define WIFI_PASS "your_wifi_password"  //replace with your wifi password
+
+#define AIO_SERVER "io.adafruit.com"
+#define AIO_SERVERPORT 1883
+#define AIO_USERNAME "your_adafruitio_username"   // replace with your adafruit io username
+#define AIO_KEY "your_adafruitio_key"              // adafruit io key 
+
+#define DHT_PIN 4 // GPIO pin connected to DHT sensor
+#define DHT_TYPE DHT22 // DHT sensor type
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+WiFiClient client;
+Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
+Adafruit_MQTT_Publish temperature = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/temperature");
+Adafruit_MQTT_Publish humidity = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/humidity");
+
+void setup() {
+  Serial.begin(115200);
+
+  // Connect to Wi-Fi
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Setup DHT sensor
+  dht.begin();
+
+  // Connect to Adafruit IO MQTT
+  mqtt.connect();
+}
+
+void loop() {
+  // Ensure MQTT connection
+  if (!mqtt.connected()) {
+    mqtt.connect();
+  }
+
+  // Read temperature and humidity from DHT sensor
+  float temp = dht.readTemperature();
+  float hum = dht.readHumidity();
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(temp) || isnan(hum)) {
+    Serial.println("Failed to read from DHT sensor!");
+    delay(2000);
+    return;
+  }
+
+  // Publish temperature and humidity to Adafruit IO
+  if (!temperature.publish(temp)) {
+    Serial.println("Failed to publish temperature to Adafruit IO!");
+  }
+  if (!humidity.publish(hum)) {
+    Serial.println("Failed to publish humidity to Adafruit IO!");
+  }
+
+  // Wait before publishing again
+  delay(60000); // Publish every 60 seconds
+}
